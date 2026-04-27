@@ -1,3 +1,7 @@
+## Build Status
+
+[![Build Status](https://problem-citation-renewably.ngrok-free.dev/buildStatus/icon?job=ncc)](https://problem-citation-renewably.ngrok-free.dev/job/ncc)
+
 # 🚀 CI/CD Pipeline: Jenkins + SonarQube — Complete Guide
 
 ## Project Structure
