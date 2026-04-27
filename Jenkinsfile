@@ -7,7 +7,12 @@
 pipeline {
 
     // ----- Agent -----------------------------------------------
-    agent any
+    agent {
+    docker {
+        image 'node:18'
+        args '-u root'
+    }
+}
 
     // ----- Environment Variables --------------------------------
     // Credentials are stored in Jenkins Credentials Manager.
