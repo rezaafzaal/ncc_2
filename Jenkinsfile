@@ -7,12 +7,7 @@
 pipeline {
 
     // ----- Agent -----------------------------------------------
-    agent {
-    docker {
-        image 'node:18'
-        args '-u root'
-    }
-}
+    agent any
 
     // ----- Environment Variables --------------------------------
     // Credentials are stored in Jenkins Credentials Manager.
@@ -64,7 +59,7 @@ pipeline {
                 // --ci is stricter than --install:
                 //   • uses package-lock.json exactly
                 //   • fails if lock file is out of sync
-                sh 'npm ci'
+                sh 'npm install'
                 echo '✅ Dependencies installed successfully.'
             }
         }
@@ -187,7 +182,9 @@ pipeline {
 
         always {
             echo '🧹 Cleaning workspace...'
-            cleanWs()
+            node('') {
+                cleanWs()
+            }
         }
 
         success {
