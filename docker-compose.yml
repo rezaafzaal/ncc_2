@@ -1,0 +1,88 @@
+version: '3.8'
+
+# ==============================================================
+# Local CI/CD Stack: Jenkins + SonarQube + PostgreSQL
+# ==============================================================
+# Usage:
+#   docker-compose up -d
+#   Jenkins   → http://localhost:9090
+#   SonarQube → http://localhost:9000
+# ==============================================================
+
+services:
+
+  # ------------------------------------------------------------
+  # Jenkins
+  # ------------------------------------------------------------
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    ports:
+      - "9090:9090"     # Web UI
+      - "50000:50000"   # Agent port (for distributed builds)
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock   # Allow Jenkins to run Docker commands
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false   # Skip setup wizard (optional)
+    networks:
+      - cicd-network
+
+  # ------------------------------------------------------------
+  # SonarQube
+  # ------------------------------------------------------------
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    restart: unless-stopped
+    depends_on:
+      - sonar-db
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - cicd-network
+    # SonarQube requires vm.max_map_count >= 524288
+    # Run on host: sudo sysctl -w vm.max_map_count=524288
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # ------------------------------------------------------------
+  # PostgreSQL (SonarQube database)
+  # ------------------------------------------------------------
+  sonar-db:
+    image: postgres:15
+    container_name: sonar-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonar_db_data:/var/lib/postgresql/data
+    networks:
+      - cicd-network
+
+# --------------------------------------------------------------
+# Volumes & Networks
+# --------------------------------------------------------------
+volumes:
+  jenkins_home:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  sonar_db_data:
+
+networks:
+  cicd-network:
+    driver: bridge
